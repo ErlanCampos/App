@@ -1,93 +1,109 @@
 import React, { useState } from 'react';
-import { useAppStore } from '../store/useAppStore';
+import { supabase } from '../supabaseClient';
 import { useNavigate } from 'react-router-dom';
-import { Wrench } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { Wrench, Loader2, AlertCircle } from 'lucide-react';
 
-export const Login = () => {
+export function Login() {
     const [email, setEmail] = useState('');
-    const login = useAppStore(state => state.login);
+    const [password, setPassword] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
     const navigate = useNavigate();
-    const [error, setError] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
+    const { session } = useAuth();
+
+    // Redirect if already logged in
+    React.useEffect(() => {
+        if (session) {
+            navigate('/');
+        }
+    }, [session, navigate]);
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
-        setIsLoading(true);
-        setError('');
+        setLoading(true);
+        setError(null);
 
-        // Simulate network delay for better UX
-        await new Promise(resolve => setTimeout(resolve, 800));
+        const { error } = await supabase.auth.signInWithPassword({
+            email,
+            password,
+        });
 
-        login(email);
-        const user = useAppStore.getState().currentUser;
-        if (user) {
-            navigate('/dashboard');
+        if (error) {
+            setError(error.message);
         } else {
-            setError('Usuário não encontrado. Tente admin@tech.com ou john@tech.com');
-            setIsLoading(false);
+            navigate('/');
         }
+        setLoading(false);
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-stone-950 relative overflow-hidden">
-            {/* Abstract Background Shapes */}
-            <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
-                <div className="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] bg-emerald-900/20 rounded-full blur-3xl animate-pulse"></div>
-                <div className="absolute top-[40%] -right-[10%] w-[40%] h-[40%] bg-stone-800/30 rounded-full blur-3xl animate-pulse delay-1000"></div>
-                <div className="absolute -bottom-[10%] left-[20%] w-[30%] h-[30%] bg-emerald-800/20 rounded-full blur-3xl animate-pulse delay-2000"></div>
-            </div>
-
-            <div className="bg-stone-900/50 backdrop-blur-lg border border-stone-800 p-8 rounded-2xl shadow-2xl w-full max-w-md relative z-10 animate-[fadeIn_0.5s_ease-out]">
-                <div className="flex justify-center mb-8">
-                    <div className="bg-gradient-to-br from-emerald-700 to-stone-700 p-4 rounded-2xl shadow-lg transform hover:scale-105 transition-transform duration-300">
-                        <Wrench className="w-10 h-10 text-white" />
+        <div className="min-h-screen bg-[#09090b] flex items-center justify-center p-4">
+            <div className="max-w-[400px] w-full bg-[#121214] rounded-2xl p-8 border border-[#27272a] shadow-2xl">
+                <div className="flex flex-col items-center mb-8">
+                    <div className="w-12 h-12 bg-emerald-700/30 rounded-xl flex items-center justify-center mb-6 group border border-emerald-900/50">
+                        <Wrench className="w-6 h-6 text-emerald-500" />
                     </div>
+                    <h2 className="text-2xl font-bold text-white mb-2 text-center">Bem-vindo de volta</h2>
+                    <p className="text-zinc-400 text-sm text-center">Faça login para gerenciar suas operações</p>
                 </div>
 
-                <h2 className="text-3xl font-bold text-center text-white mb-2 tracking-tight">Bem-vindo de volta</h2>
-                <p className="text-stone-400 text-center mb-8">Faça login para gerenciar suas operações</p>
-
-                <form onSubmit={handleLogin} className="space-y-6">
-                    <div>
-                        <label className="block text-sm font-medium text-stone-300 mb-1">Endereço de Email</label>
+                <form onSubmit={handleLogin} className="space-y-4">
+                    <div className="space-y-1.5">
+                        <label className="block text-xs font-medium text-zinc-300 ml-1">
+                            Endereço de Email
+                        </label>
                         <input
                             type="email"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            className="w-full px-4 py-3 bg-stone-950/50 border border-stone-800 rounded-xl text-white placeholder-stone-600 focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:border-transparent transition-all duration-200"
-                            placeholder="admin@tech.com"
                             required
+                            className="block w-full px-4 py-3 bg-[#09090b] border border-[#27272a] rounded-lg text-white placeholder-zinc-600 focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 transition-all text-sm"
+                            placeholder="admin@tech.com"
+                        />
+                    </div>
+
+                    <div className="space-y-1.5">
+                        <label className="block text-xs font-medium text-zinc-300 ml-1">
+                            Senha
+                        </label>
+                        <input
+                            type="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            required
+                            className="block w-full px-4 py-3 bg-[#09090b] border border-[#27272a] rounded-lg text-white placeholder-zinc-600 focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 transition-all text-sm"
+                            placeholder="••••••••"
                         />
                     </div>
 
                     {error && (
-                        <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-3 text-red-300 text-sm text-center animate-[shake_0.5s_ease-in-out]">
-                            {error}
+                        <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg flex items-center gap-2 text-red-400 text-xs">
+                            <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                            <p>{error}</p>
                         </div>
                     )}
 
                     <button
                         type="submit"
-                        disabled={isLoading}
-                        className="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-lg text-sm font-bold text-white bg-gradient-to-r from-emerald-700 to-emerald-600 hover:from-emerald-600 hover:to-emerald-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-stone-900 focus:ring-emerald-500 transform hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed"
+                        disabled={loading}
+                        className="w-full mt-2 flex items-center justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#121214] focus:ring-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                     >
-                        {isLoading ? (
-                            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                        ) : (
-                            'Entrar'
-                        )}
+                        {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Entrar'}
                     </button>
                 </form>
 
-                <div className="mt-8 pt-6 border-t border-stone-800">
-                    <p className="text-xs text-stone-500 text-center uppercase tracking-wider mb-3">Acesso Demo</p>
-                    <div className="flex justify-center gap-4 text-sm text-stone-400">
-                        <button onClick={() => setEmail('admin@tech.com')} className="hover:text-emerald-400 hover:underline transition-colors">Admin</button>
-                        <span>•</span>
-                        <button onClick={() => setEmail('john@tech.com')} className="hover:text-emerald-400 hover:underline transition-colors">Técnico</button>
+                <div className="mt-8 pt-6 border-t border-[#27272a]">
+                    <p className="text-center text-[10px] uppercase tracking-wider text-zinc-500 font-medium mb-3">
+                        Acesso Demo
+                    </p>
+                    <div className="flex justify-center gap-4 text-sm text-zinc-400">
+                        <span className="cursor-pointer hover:text-emerald-400 transition-colors">Admin</span>
+                        <span className="text-zinc-700">•</span>
+                        <span className="cursor-pointer hover:text-emerald-400 transition-colors">Técnico</span>
                     </div>
                 </div>
             </div>
         </div>
     );
-};
+}
