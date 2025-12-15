@@ -17,14 +17,24 @@ Icon.Default.mergeOptions({
     shadowUrl: markerShadowPng,
 });
 
+import { useAuth } from '../context/AuthContext';
+
+// ...
+
 export const MapView = () => {
-    const { serviceOrders, currentUser } = useAppStore();
+    const { serviceOrders } = useAppStore();
+    const { session } = useAuth();
 
-    if (!currentUser) return null;
+    // Derived user info
+    const userEmail = session?.user.email;
+    const isAdmin = userEmail?.includes('admin') || userEmail === 'suporte@maprinter.com.br';
+    const userId = session?.user.id;
 
-    const relevantOrders = currentUser.role === 'admin'
+    if (!session) return null;
+
+    const relevantOrders = isAdmin
         ? serviceOrders
-        : serviceOrders.filter(os => os.assignedTechnicianId === currentUser.id);
+        : serviceOrders.filter(os => os.assignedTechnicianId === userId);
 
     const defaultCenter = { lat: -14.8661, lng: -40.8394 }; // Vitória da Conquista - BA
 

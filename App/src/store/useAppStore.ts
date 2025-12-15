@@ -597,20 +597,6 @@ interface AppState {
     // logout: () => void; // Removed logout
 }
 
-// Assuming the store definition starts here, and the previous content was a broken implementation.
-// The following block replaces the broken `removeTechnician` implementation,
-// the `theme` and `toggleTheme` definitions, and fixes the overall store's closing braces.
-// The `currentUser` and `login` are assumed to be part of the store's state/actions before `removeTechnician`.
-
-// The instruction provides the *end* of the store's implementation, including `removeTechnician`, `theme`, `toggleTheme`,
-// and the closing structure for the `persist` middleware.
-// The `// UI State` and type definitions (`theme: 'light' | 'dark';`, etc.) from the instruction's snippet
-// are already correctly defined in the `AppState` interface and should not be duplicated here.
-// The actual code to insert starts from the `removeTechnician` implementation.
-
-// This is the corrected part of the store definition, replacing the broken section.
-// It assumes the `currentUser` and `login` implementations are defined before `removeTechnician`.
-// The `removeTechnician` implementation, `theme` state, `toggleTheme` action, and the final closing structure are provided by the instruction.
 removeTechnician: async (id) => {
     if (!confirm('Tem certeza que deseja remover este técnico do sistema?')) return;
 
