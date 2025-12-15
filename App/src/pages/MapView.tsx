@@ -48,12 +48,12 @@ export const MapView = () => {
     };
 
     return (
-        <div className="h-full w-full animate-[fadeIn_0.5s_ease-out]">
+        <div className="w-full h-[calc(100vh-8rem)] min-h-[500px] animate-[fadeIn_0.5s_ease-out]">
             <MapContainer
                 center={[defaultCenter.lat, defaultCenter.lng]}
                 zoom={13}
                 style={{ height: '100%', width: '100%' }}
-                className="z-0"
+                className="z-0 rounded-2xl"
             >
                 <TileLayer
                     attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
