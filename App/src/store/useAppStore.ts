@@ -16,8 +16,8 @@ interface AppState {
     assignServiceOrder: (osId: string, technicianId: string) => Promise<void>;
     removeServiceOrder: (id: string) => Promise<void>;
 
-    addTechnician: () => void;
-    removeTechnician: () => void;
+    addTechnician: (name: string, email: string) => Promise<void>;
+    removeTechnician: (id: string) => Promise<void>;
 
     // UI State
     theme: 'light' | 'dark';
@@ -161,11 +161,44 @@ export const useAppStore = create<AppState>((set, get) => ({
         }
     },
 
-    addTechnician: () => {
-        console.warn("Adding technicians via Store is deprecated. Use Auth Sign up.");
-        alert("Para adicionar técnicos, novos usuários devem se cadastrar.");
+    addTechnician: async (name, email) => {
+        const { error } = await supabase.functions.invoke('admin-actions', {
+            body: {
+                action: 'create_user',
+                email,
+                password: 'TechPassword123!', // Temporary password
+                name
+            }
+        });
+
+        if (error) {
+            console.error('Error adding technician:', error);
+            alert('Erro ao adicionar técnico: ' + error.message);
+        } else {
+            alert('Técnico adicionado com sucesso! Senha temporária: TechPassword123!');
+            get().fetchTechnicians();
+        }
     },
-    removeTechnician: () => { console.warn("Not implemented yet for DB"); },
+
+    removeTechnician: async (id) => {
+        if (!confirm('Tem certeza que deseja remover este técnico do sistema?')) return;
+
+        const { error } = await supabase.functions.invoke('admin-actions', {
+            body: {
+                action: 'delete_user',
+                id
+            }
+        });
+
+        if (error) {
+            console.error('Error removing technician:', error);
+            alert('Erro ao remover técnico');
+        } else {
+            set(state => ({
+                users: state.users.filter(u => u.id !== id)
+            }));
+        }
+    },
 
     theme: 'dark',
     toggleTheme: () => set((state) => ({
