@@ -1,15 +1,23 @@
 
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useAppStore } from '../store/useAppStore';
 import { useAuth } from '../context/AuthContext';
-import { LayoutDashboard, Calendar, Map as MapIcon, LogOut, Users, ClipboardList, Moon, Sun } from 'lucide-react';
+import { LayoutDashboard, Calendar, Map as MapIcon, LogOut, Users, ClipboardList, Moon, Sun, Key } from 'lucide-react';
+import { supabase } from '../supabaseClient';
 import clsx from 'clsx';
 
 export const Layout = () => {
     const { logout: storeLogout, theme, toggleTheme, fetchServiceOrders, fetchTechnicians } = useAppStore();
     const { session, signOut } = useAuth();
     const navigate = useNavigate();
+
+    // Modal State
+    const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+    const [newPassword, setNewPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [passwordError, setPasswordError] = useState('');
+    const [passwordSuccess, setPasswordSuccess] = useState('');
 
     // Derive user from Supabase session
     const currentUser = useMemo(() => {
@@ -51,6 +59,40 @@ export const Layout = () => {
         await signOut();
         storeLogout();
         navigate('/login');
+    };
+
+    const handleChangePassword = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setPasswordError('');
+        setPasswordSuccess('');
+
+        if (newPassword !== confirmPassword) {
+            setPasswordError('As senhas não coincidem');
+            return;
+        }
+
+        if (newPassword.length < 6) {
+            setPasswordError('A senha deve ter pelo menos 6 caracteres');
+            return;
+        }
+
+        try {
+            const { error } = await supabase.auth.updateUser({ password: newPassword });
+
+            if (error) {
+                setPasswordError(error.message);
+            } else {
+                setPasswordSuccess('Senha alterada com sucesso!');
+                setNewPassword('');
+                setConfirmPassword('');
+                setTimeout(() => {
+                    setIsPasswordModalOpen(false);
+                    setPasswordSuccess('');
+                }, 2000);
+            }
+        } catch (err: any) {
+            setPasswordError(err.message || 'Erro ao alterar senha');
+        }
     };
 
     const NavItem = ({ to, icon: Icon, label }: { to: string, icon: any, label: string }) => (
@@ -140,6 +182,14 @@ export const Layout = () => {
                     </button>
 
                     <button
+                        onClick={() => setIsPasswordModalOpen(true)}
+                        className="flex items-center w-full px-4 py-3 text-sm font-medium text-stone-600 dark:text-stone-400 hover:text-emerald-800 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/10 rounded-xl transition-all duration-200 group"
+                    >
+                        <Key className="w-5 h-5 mr-3 text-stone-400 dark:text-stone-500 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors" />
+                        Alterar Senha
+                    </button>
+
+                    <button
                         onClick={handleLogout}
                         className="flex items-center w-full px-4 py-3 text-sm font-medium text-stone-600 dark:text-stone-400 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-xl transition-all duration-200 group"
                     >
@@ -160,6 +210,74 @@ export const Layout = () => {
                     <Outlet />
                 </div>
             </main>
+
+            {/* Password Change Modal */}
+            {isPasswordModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                    <div className="bg-white dark:bg-stone-900 rounded-2xl shadow-xl w-full max-w-md p-6 border border-stone-200 dark:border-stone-800 animate-[fadeIn_0.3s_ease-out]">
+                        <h2 className="text-xl font-bold text-stone-800 dark:text-stone-100 mb-4">Alterar Senha</h2>
+
+                        {passwordError && (
+                            <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm rounded-lg">
+                                {passwordError}
+                            </div>
+                        )}
+
+                        {passwordSuccess && (
+                            <div className="mb-4 p-3 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 text-sm rounded-lg">
+                                {passwordSuccess}
+                            </div>
+                        )}
+
+                        <form onSubmit={handleChangePassword} className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">Nova Senha</label>
+                                <input
+                                    type="password"
+                                    value={newPassword}
+                                    onChange={(e) => setNewPassword(e.target.value)}
+                                    className="w-full px-4 py-2 rounded-xl border border-stone-200 dark:border-stone-800 bg-stone-50 dark:bg-stone-950 text-stone-900 dark:text-white focus:ring-2 focus:ring-emerald-500 outline-none"
+                                    required
+                                    minLength={6}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">Confirmar Nova Senha</label>
+                                <input
+                                    type="password"
+                                    value={confirmPassword}
+                                    onChange={(e) => setConfirmPassword(e.target.value)}
+                                    className="w-full px-4 py-2 rounded-xl border border-stone-200 dark:border-stone-800 bg-stone-50 dark:bg-stone-950 text-stone-900 dark:text-white focus:ring-2 focus:ring-emerald-500 outline-none"
+                                    required
+                                    minLength={6}
+                                />
+                            </div>
+
+                            <div className="flex justify-end gap-3 mt-6">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setIsPasswordModalOpen(false);
+                                        setPasswordError('');
+                                        setPasswordSuccess('');
+                                        setNewPassword('');
+                                        setConfirmPassword('');
+                                    }}
+                                    className="px-4 py-2 text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-xl transition-colors"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="px-4 py-2 bg-emerald-700 text-white rounded-xl hover:bg-emerald-800 transition-colors shadow-sm"
+                                >
+                                    Alterar Senha
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

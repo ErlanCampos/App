@@ -38,12 +38,12 @@ export const MapView = () => {
     };
 
     return (
-        <div className="h-[calc(100vh-100px)] rounded-2xl overflow-hidden shadow-lg border border-stone-200 dark:border-stone-800 animate-[fadeIn_0.5s_ease-out]">
+        <div className="h-full w-full min-h-[500px] flex flex-col rounded-2xl overflow-hidden shadow-lg border border-stone-200 dark:border-stone-800 animate-[fadeIn_0.5s_ease-out]">
             <MapContainer
                 center={[defaultCenter.lat, defaultCenter.lng]}
                 zoom={13}
-                style={{ height: '100%', width: '100%' }}
-                className="transition-all duration-300"
+                style={{ height: '100%', minHeight: '500px', width: '100%' }}
+                className="flex-1 z-0"
             >
                 <TileLayer
                     attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
