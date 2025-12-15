@@ -11,7 +11,8 @@ export const Orders = () => {
     const { session } = useAuth();
     const [isCreating, setIsCreating] = useState(false);
 
-    const isAdmin = session?.user?.email?.includes('admin') || true; // Fallback for dev, but effectively checking email for auth.
+    // Fallback for dev, but effectively checking email for auth.
+    const isAdmin = session?.user?.email?.includes('admin') || session?.user?.email === 'suporte@maprinter.com.br' || false;
 
     // Form State
     const [title, setTitle] = useState('');

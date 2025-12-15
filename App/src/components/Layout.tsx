@@ -14,11 +14,12 @@ export const Layout = () => {
     // Derive user from Supabase session
     const currentUser = useMemo(() => {
         if (!session?.user) return null;
+        // Mock role check for demo purposes
+        const isAdmin = session.user.email?.includes('admin') || session.user.email === 'suporte@maprinter.com.br';
         return {
             name: session.user.email?.split('@')[0] || 'User',
             email: session.user.email,
-            // Mock role check for demo purposes
-            role: session.user.email?.includes('admin') ? 'admin' : 'technician'
+            role: isAdmin ? 'admin' : 'technician'
         };
     }, [session]);
 
