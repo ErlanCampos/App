@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { supabase } from '../supabaseClient';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Wrench, Loader2, AlertCircle } from 'lucide-react';
+import { Printer, Loader2, AlertCircle } from 'lucide-react';
 
 export function Login() {
     const [email, setEmail] = useState('');
