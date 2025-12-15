@@ -1,0 +1,9 @@
+@import "tailwindcss";
+@variant dark (&:where(.dark, .dark *));
+
+html,
+body,
+#root {
+  height: 100%;
+  font-family: 'Inter', sans-serif;
+}
