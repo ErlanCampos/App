@@ -1,105 +1,171 @@
 import { create } from 'zustand';
+import { supabase } from '../supabaseClient';
 import type { User, ServiceOrder, ServiceOrderStatus } from '../types';
 
 interface AppState {
-    currentUser: User | null;
-    users: User[];
+    users: User[]; // This will now be fetched from 'profiles'
     serviceOrders: ServiceOrder[];
+    isLoading: boolean;
 
-    login: (email: string) => void;
-    logout: () => void;
+    // Actions
+    fetchServiceOrders: () => Promise<void>;
+    fetchTechnicians: () => Promise<void>;
 
-    addTechnician: (name: string, email: string) => void;
-    removeTechnician: (id: string) => void;
+    addServiceOrder: (os: Omit<ServiceOrder, 'id' | 'createdAt' | 'status'>) => Promise<void>;
+    updateServiceOrderStatus: (id: string, status: ServiceOrderStatus) => Promise<void>;
+    assignServiceOrder: (osId: string, technicianId: string) => Promise<void>;
+    removeServiceOrder: (id: string) => Promise<void>;
 
-    addServiceOrder: (os: Omit<ServiceOrder, 'id' | 'createdAt' | 'status'>) => void;
-    updateServiceOrderStatus: (id: string, status: ServiceOrderStatus) => void;
-    assignServiceOrder: (osId: string, technicianId: string) => void;
-    removeServiceOrder: (id: string) => void;
+    addTechnician: () => void;
+    removeTechnician: () => void;
 
+    // UI State
     theme: 'light' | 'dark';
     toggleTheme: () => void;
+    // Legacy auth helpers (UI might still use them but actual auth is via AuthContext)
+    currentUser: User | null;
+    login: (email: string) => void;
+    logout: () => void;
 }
 
-// Mock Data
-const MOCK_USERS: User[] = [
-    { id: '1', name: 'Admin User', email: 'admin@tech.com', role: 'admin' },
-    { id: '2', name: 'John Tech', email: 'john@tech.com', role: 'technician' },
-    { id: '3', name: 'Jane Tech', email: 'jane@tech.com', role: 'technician' },
-];
+export const useAppStore = create<AppState>((set, get) => ({
+    currentUser: null,
+    users: [],
+    serviceOrders: [],
+    isLoading: false,
 
-const MOCK_OS: ServiceOrder[] = [
-    {
-        id: 'os-1',
-        title: 'Repair AC Unit',
-        description: 'AC unit not cooling in server room.',
-        date: new Date().toISOString(),
-        location: { lat: -23.5505, lng: -46.6333, address: 'Av. Paulista, 1000' },
-        status: 'pending',
-        assignedTechnicianId: null,
-        createdAt: new Date().toISOString(),
+    login: () => { }, // Deprecated, handled by AuthContext
+    logout: () => set({ currentUser: null }), // Just clears local legacy state
+
+    fetchServiceOrders: async () => {
+        set({ isLoading: true });
+        const { data, error } = await supabase
+            .from('service_orders')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            console.error('Error fetching orders:', error);
+        } else if (data) {
+            // Map DB fields to Type (if necessary, snake_case to camelCase)
+            // Our types match usually but let's be careful with dates
+            const formatted: ServiceOrder[] = data.map(item => ({
+                id: item.id,
+                title: item.title,
+                description: item.description,
+                status: item.status,
+                date: item.date,
+                location: {
+                    lat: item.location_lat,
+                    lng: item.location_lng,
+                    address: item.location_address
+                },
+                assignedTechnicianId: item.assigned_technician_id,
+                createdAt: item.created_at
+            }));
+            set({ serviceOrders: formatted, isLoading: false });
+        } else {
+            set({ isLoading: false });
+        }
     },
-    {
-        id: 'os-2',
-        title: 'Install Router',
-        description: 'New office setup requires high-end router.',
-        date: new Date(Date.now() + 86400000).toISOString(), // Tomorrow
-        location: { lat: -23.5615, lng: -46.6550, address: 'Rua Augusta, 500' },
-        status: 'pending',
-        assignedTechnicianId: '2', // Assigned to John
-        createdAt: new Date().toISOString(),
-    }
-];
 
-export const useAppStore = create<AppState>((set) => ({
-    currentUser: null, // Start logged out
-    users: MOCK_USERS,
-    serviceOrders: MOCK_OS,
+    fetchTechnicians: async () => {
+        // Fetch users who are technicians (or all profiles)
+        const { data, error } = await supabase
+            .from('profiles')
+            .select('*');
 
-    login: (email) => set((state) => {
-        const user = state.users.find(u => u.email === email);
-        return user ? { currentUser: user } : {};
-    }),
+        if (error) {
+            console.error('Error fetching technicians:', error);
+        } else if (data) {
+            const formatted: User[] = data.map(item => ({
+                id: item.id,
+                name: item.name || item.full_name || item.email?.split('@')[0],
+                email: item.email,
+                role: item.role
+            }));
+            set({ users: formatted });
+        }
+    },
 
-    logout: () => set({ currentUser: null }),
+    addServiceOrder: async (os) => {
+        const { error } = await supabase
+            .from('service_orders')
+            .insert([{
+                title: os.title,
+                description: os.description,
+                date: os.date,
+                location_lat: os.location.lat,
+                location_lng: os.location.lng,
+                location_address: os.location.address,
+                assigned_technician_id: os.assignedTechnicianId,
+                status: 'pending'
+            }]);
 
-    addTechnician: (name, email) => set((state) => ({
-        users: [...state.users, {
-            id: Math.random().toString(36).substr(2, 9),
-            name,
-            email,
-            role: 'technician'
-        }]
-    })),
+        if (error) {
+            console.error('Error adding order:', error);
+            alert('Erro ao salvar ordem');
+        } else {
+            get().fetchServiceOrders();
+        }
+    },
 
-    removeTechnician: (id) => set((state) => ({
-        users: state.users.filter(u => u.id !== id)
-    })),
+    removeServiceOrder: async (id) => {
+        const { error } = await supabase
+            .from('service_orders')
+            .delete()
+            .eq('id', id);
 
-    addServiceOrder: (os) => set((state) => ({
-        serviceOrders: [...state.serviceOrders, {
-            ...os,
-            id: Math.random().toString(36).substr(2, 9),
-            status: 'pending',
-            createdAt: new Date().toISOString(),
-        }]
-    })),
+        if (error) {
+            console.error('Error deleting order:', error);
+            alert('Erro ao excluir ordem');
+        } else {
+            set(state => ({
+                serviceOrders: state.serviceOrders.filter(os => os.id !== id)
+            }));
+        }
+    },
 
-    removeServiceOrder: (id) => set((state) => ({
-        serviceOrders: state.serviceOrders.filter(os => os.id !== id)
-    })),
+    updateServiceOrderStatus: async (id, status) => {
+        const { error } = await supabase
+            .from('service_orders')
+            .update({ status })
+            .eq('id', id);
 
-    updateServiceOrderStatus: (id, status) => set((state) => ({
-        serviceOrders: state.serviceOrders.map(os =>
-            os.id === id ? { ...os, status } : os
-        )
-    })),
+        if (error) {
+            console.error('Error updating status:', error);
+        } else {
+            set(state => ({
+                serviceOrders: state.serviceOrders.map(os =>
+                    os.id === id ? { ...os, status } : os
+                )
+            }));
+        }
+    },
 
-    assignServiceOrder: (osId, technicianId) => set((state) => ({
-        serviceOrders: state.serviceOrders.map(os =>
-            os.id === osId ? { ...os, assignedTechnicianId: technicianId } : os
-        )
-    })),
+    assignServiceOrder: async (osId, technicianId) => {
+        const val = technicianId === "" ? null : technicianId;
+        const { error } = await supabase
+            .from('service_orders')
+            .update({ assigned_technician_id: val })
+            .eq('id', osId);
+
+        if (error) {
+            console.error('Error assigning technician:', error);
+        } else {
+            set(state => ({
+                serviceOrders: state.serviceOrders.map(os =>
+                    os.id === osId ? { ...os, assignedTechnicianId: val } : os
+                )
+            }));
+        }
+    },
+
+    addTechnician: () => {
+        console.warn("Adding technicians via Store is deprecated. Use Auth Sign up.");
+        alert("Para adicionar técnicos, novos usuários devem se cadastrar.");
+    },
+    removeTechnician: () => { console.warn("Not implemented yet for DB"); },
 
     theme: 'dark',
     toggleTheme: () => set((state) => ({

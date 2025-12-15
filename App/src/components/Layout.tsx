@@ -7,7 +7,7 @@ import { LayoutDashboard, Calendar, Map as MapIcon, LogOut, Users, ClipboardList
 import clsx from 'clsx';
 
 export const Layout = () => {
-    const { logout: storeLogout, theme, toggleTheme } = useAppStore();
+    const { logout: storeLogout, theme, toggleTheme, fetchServiceOrders, fetchTechnicians } = useAppStore();
     const { session, signOut } = useAuth();
     const navigate = useNavigate();
 
@@ -26,8 +26,12 @@ export const Layout = () => {
     useEffect(() => {
         if (!session) {
             navigate('/login');
+        } else {
+            // Load data when authenticated
+            fetchServiceOrders();
+            fetchTechnicians();
         }
-    }, [session, navigate]);
+    }, [session, navigate, fetchServiceOrders, fetchTechnicians]);
 
     // Apply theme to html element
     useEffect(() => {
