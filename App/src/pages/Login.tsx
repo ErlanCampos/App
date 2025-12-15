@@ -40,13 +40,18 @@ export function Login() {
     return (
         <div className="min-h-screen bg-[#09090b] flex items-center justify-center p-4">
             <div className="max-w-[400px] w-full bg-[#121214] rounded-2xl p-8 border border-[#27272a] shadow-2xl">
-                <div className="flex flex-col items-center mb-8">
-                    <div className="w-12 h-12 bg-emerald-700/30 rounded-xl flex items-center justify-center mb-6 group border border-emerald-900/50">
-                        <Wrench className="w-6 h-6 text-emerald-500" />
+                <div className="flex justify-center mb-8">
+                    <div className="p-4 bg-stone-100 dark:bg-stone-800 rounded-2xl shadow-inner">
+                        <Printer className="w-12 h-12 text-emerald-600 dark:text-emerald-500" />
                     </div>
-                    <h2 className="text-2xl font-bold text-white mb-2 text-center">Bem-vindo de volta</h2>
-                    <p className="text-zinc-400 text-sm text-center">Faça login para gerenciar suas operações</p>
                 </div>
+
+                <h2 className="text-2xl font-bold text-center text-stone-800 dark:text-stone-100 mb-2">
+                    MA Printer Solutions
+                </h2>
+                <p className="text-center text-stone-500 dark:text-stone-400 mb-8">
+                    Entre com suas credenciais para acessar
+                </p>
 
                 <form onSubmit={handleLogin} className="space-y-4">
                     <div className="space-y-1.5">

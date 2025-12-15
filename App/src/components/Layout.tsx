@@ -129,7 +129,7 @@ export const Layout = () => {
                         <div className="p-2 bg-gradient-to-br from-emerald-800 to-stone-800 dark:from-emerald-600 dark:to-stone-900 rounded-lg mr-3 shadow-lg">
                             <LayoutDashboard className="w-5 h-5 text-white" />
                         </div>
-                        TechManager
+                        MA Printer Solutions
                     </h1>
                     <div className="mt-6 flex items-center p-3 bg-stone-50 dark:bg-stone-950/50 rounded-xl border border-stone-100 dark:border-stone-800">
                         <div className="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-800 dark:text-emerald-400 font-bold text-lg border-2 border-white dark:border-stone-700 shadow-sm">
