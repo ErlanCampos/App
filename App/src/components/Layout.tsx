@@ -1,19 +1,32 @@
 
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useAppStore } from '../store/useAppStore';
+import { useAuth } from '../context/AuthContext';
 import { LayoutDashboard, Calendar, Map as MapIcon, LogOut, Users, ClipboardList, Moon, Sun } from 'lucide-react';
 import clsx from 'clsx';
 
 export const Layout = () => {
-    const { currentUser, logout, theme, toggleTheme } = useAppStore();
+    const { logout: storeLogout, theme, toggleTheme } = useAppStore();
+    const { session, signOut } = useAuth();
     const navigate = useNavigate();
 
+    // Derive user from Supabase session
+    const currentUser = useMemo(() => {
+        if (!session?.user) return null;
+        return {
+            name: session.user.email?.split('@')[0] || 'User',
+            email: session.user.email,
+            // Mock role check for demo purposes
+            role: session.user.email?.includes('admin') ? 'admin' : 'technician'
+        };
+    }, [session]);
+
     useEffect(() => {
-        if (!currentUser) {
+        if (!session) {
             navigate('/login');
         }
-    }, [currentUser, navigate]);
+    }, [session, navigate]);
 
     // Apply theme to html element
     useEffect(() => {
@@ -29,8 +42,9 @@ export const Layout = () => {
         return null;
     }
 
-    const handleLogout = () => {
-        logout();
+    const handleLogout = async () => {
+        await signOut();
+        storeLogout();
         navigate('/login');
     };
 

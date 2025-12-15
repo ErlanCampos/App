@@ -15,6 +15,7 @@ interface AppState {
     addServiceOrder: (os: Omit<ServiceOrder, 'id' | 'createdAt' | 'status'>) => void;
     updateServiceOrderStatus: (id: string, status: ServiceOrderStatus) => void;
     assignServiceOrder: (osId: string, technicianId: string) => void;
+    removeServiceOrder: (id: string) => void;
 
     theme: 'light' | 'dark';
     toggleTheme: () => void;
@@ -82,6 +83,10 @@ export const useAppStore = create<AppState>((set) => ({
             status: 'pending',
             createdAt: new Date().toISOString(),
         }]
+    })),
+
+    removeServiceOrder: (id) => set((state) => ({
+        serviceOrders: state.serviceOrders.filter(os => os.id !== id)
     })),
 
     updateServiceOrderStatus: (id, status) => set((state) => ({

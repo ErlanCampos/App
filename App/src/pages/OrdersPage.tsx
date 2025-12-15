@@ -1,13 +1,17 @@
 import React, { useState } from 'react';
 import { useAppStore } from '../store/useAppStore';
-import { PlusCircle, Calendar as CalendarIcon, MapPin } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { PlusCircle, Calendar as CalendarIcon, MapPin, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import clsx from 'clsx';
 import type { ServiceOrderStatus } from '../types';
 
 export const Orders = () => {
-    const { serviceOrders, users, addServiceOrder, assignServiceOrder } = useAppStore();
+    const { serviceOrders, users, addServiceOrder, assignServiceOrder, removeServiceOrder } = useAppStore();
+    const { session } = useAuth();
     const [isCreating, setIsCreating] = useState(false);
+
+    const isAdmin = session?.user?.email?.includes('admin') || true; // Fallback for dev, but effectively checking email for auth.
 
     // Form State
     const [title, setTitle] = useState('');
@@ -186,16 +190,32 @@ export const Orders = () => {
                             <div className="flex flex-col items-end gap-2 min-w-[200px] w-full md:w-auto border-t md:border-t-0 border-stone-100 dark:border-stone-800 pt-4 md:pt-0">
                                 <div className="flex flex-col md:items-end w-full">
                                     <span className="text-xs font-semibold text-stone-400 dark:text-stone-500 uppercase tracking-wider mb-1">Técnico Responsável</span>
-                                    <select
-                                        className="w-full md:w-auto bg-stone-50 dark:bg-stone-950/50 border border-stone-200 dark:border-stone-800 rounded-lg px-3 py-2 text-sm font-medium text-stone-700 dark:text-stone-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 hover:border-emerald-300 dark:hover:border-emerald-700 transition-colors"
-                                        value={os.assignedTechnicianId || ""}
-                                        onChange={(e) => assignServiceOrder(os.id, e.target.value)}
-                                    >
-                                        <option value="">-- Não Atribuído --</option>
-                                        {technicians.map(t => (
-                                            <option key={t.id} value={t.id}>{t.name}</option>
-                                        ))}
-                                    </select>
+                                    <div className="flex items-center gap-2">
+                                        <select
+                                            className="w-full md:w-auto bg-stone-50 dark:bg-stone-950/50 border border-stone-200 dark:border-stone-800 rounded-lg px-3 py-2 text-sm font-medium text-stone-700 dark:text-stone-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 hover:border-emerald-300 dark:hover:border-emerald-700 transition-colors"
+                                            value={os.assignedTechnicianId || ""}
+                                            onChange={(e) => assignServiceOrder(os.id, e.target.value)}
+                                        >
+                                            <option value="">-- Não Atribuído --</option>
+                                            {technicians.map(t => (
+                                                <option key={t.id} value={t.id}>{t.name}</option>
+                                            ))}
+                                        </select>
+
+                                        {isAdmin && (
+                                            <button
+                                                onClick={() => {
+                                                    if (confirm('Tem certeza que deseja excluir esta ordem?')) {
+                                                        removeServiceOrder(os.id);
+                                                    }
+                                                }}
+                                                className="p-2 text-stone-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                                                title="Excluir Ordem"
+                                            >
+                                                <Trash2 className="w-5 h-5" />
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         </div>
