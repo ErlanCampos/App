@@ -7,15 +7,17 @@ export const Technicians = () => {
     const [isAdding, setIsAdding] = useState(false);
     const [newTechName, setNewTechName] = useState('');
     const [newTechEmail, setNewTechEmail] = useState('');
+    const [newTechPassword, setNewTechPassword] = useState('');
 
     const technicians = users.filter((u) => u.role === 'technician');
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (newTechName && newTechEmail) {
-            addTechnician(newTechName, newTechEmail);
+        if (newTechName && newTechEmail && newTechPassword) {
+            addTechnician(newTechName, newTechEmail, newTechPassword);
             setNewTechName('');
             setNewTechEmail('');
+            setNewTechPassword('');
             setIsAdding(false);
         }
     };
@@ -65,6 +67,18 @@ export const Technicians = () => {
                                 className="w-full px-4 py-3 bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-800 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all dark:text-white"
                                 placeholder="joao@techmanager.com"
                                 required
+                            />
+                        </div>
+                        <div className="flex-1 w-full">
+                            <label className="block text-sm font-semibold text-stone-600 dark:text-stone-400 mb-2">Senha de Acesso</label>
+                            <input
+                                type="password"
+                                value={newTechPassword}
+                                onChange={(e) => setNewTechPassword(e.target.value)}
+                                className="w-full px-4 py-3 bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-800 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all dark:text-white"
+                                placeholder="••••••••"
+                                required
+                                minLength={6}
                             />
                         </div>
                         <div className="flex gap-3 w-full md:w-auto">
